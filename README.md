@@ -1,2 +1,4 @@
 # Liveness-FaceCheck
-eye_blinking, mouth opening, liveness_model
+1) eye_blinking
+2) mouth opening
+3) liveness_model
