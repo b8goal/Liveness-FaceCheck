@@ -129,12 +129,12 @@ def process_livenessdetection(model_detector, model_recognizer, model_liveness, 
             # Check if eyes are close and if mouth is open
             eyes_close, eyes_ratio = face_liveness.is_eyes_close(frame, face)
             mouth_open, mouth_ratio = face_liveness.is_mouth_open(frame, face)
-            print("eyes_close={}, eyes_ratio ={:.2f}".format(mouth_open, mouth_ratio))
-            print("mouth_open={}, mouth_ratio={:.2f}".format(mouth_open, mouth_ratio))
+            #print("eyes_close={}, eyes_ratio ={:.2f}".format(mouth_open, mouth_ratio))
+            #print("mouth_open={}, mouth_ratio={:.2f}".format(mouth_open, mouth_ratio))
 
             # Detect if frame is a print attack or replay attack based on colorspace
             is_fake_print  = face_liveness2.is_fake(frame, face)
-            #is_fake_replay = face_liveness2.is_fake(frame, face, flag=1)
+            is_fake_replay = face_liveness2.is_fake(frame, face, flag=1)
 
             # Identify face only if it is not fake and eyes are open and mouth is close
             if is_fake_print:
@@ -168,8 +168,7 @@ def process_livenessdetection(model_detector, model_recognizer, model_liveness, 
             break
 
 
-    print("Note: this will run for {} seconds only".format(runtime))
-
+    #print("Note: this will run for {} seconds only".format(runtime))
     # Determining if face is alive can depend on the following factors and more:
     time_elapsed = int(time()-time_start)
     print("\n")
@@ -180,7 +179,10 @@ def process_livenessdetection(model_detector, model_recognizer, model_liveness, 
     print("total_mouth_opens       = {}".format(total_mouth_opens))       # fake face if 0
     print("is_fake_count_print     = {}".format(is_fake_count_print))     # fake face if not 0
     print("identified_unique_faces = {}".format(identified_unique_faces)) # fake face if recognized more than 1 face
-    print("Todo: determine if face is alive using this data.")
+    if total_eye_blinks == 0 or total_mouth_opens == 0:
+        print("Fake Data")
+    else:
+        print("Your aren't Fake Data")
     print("\n")
 
     # Release the camera
@@ -189,8 +191,8 @@ def process_livenessdetection(model_detector, model_recognizer, model_liveness, 
 
 
 def run(cam_index, cam_resolution):
-    detector=FaceDetectorModels.HAARCASCADE
-    encoder=FaceEncoderModels.LBPH
+    detector=FaceDetectorModels.FACENET
+    encoder=FaceEncoderModels.FACENET
     liveness=FaceLivenessModels.EYESBLINK_MOUTHOPEN
     process_livenessdetection(detector, encoder, liveness, cam_index, cam_resolution)
 
@@ -205,7 +207,7 @@ def main(args):
     try:
         cam_resolution = resolutions[int(args.resolution)]
     except:
-        cam_resolution = RESOLUTION_VGA
+        cam_resolution = RESOLUTION_QVGA
 
     if args.detector and args.encoder and args.liveness:
         try:
@@ -222,15 +224,15 @@ def main(args):
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--detector', required=False, default=0, 
+    parser.add_argument('--detector', required=False, default=5, 
         help='Detector model to use. Options: 0-HAARCASCADE, 1-DLIBHOG, 2-DLIBCNN, 3-SSDRESNET, 4-MTCNN, 5-FACENET')
-    parser.add_argument('--encoder', required=False, default=0, 
+    parser.add_argument('--encoder', required=False, default=3, 
         help='Encoder model to use. Options: 0-LBPH, 1-OPENFACE, 2-DLIBRESNET, 3-FACENET')
-    parser.add_argument('--liveness', required=False, default=0, 
+    parser.add_argument('--liveness', required=False, default=1, 
         help='Liveness detection model to use. Options: 0-EYESBLINK_MOUTHOPEN, 1-COLORSPACE_YCRCBLUV')
     parser.add_argument('--webcam', required=False, default=0, 
         help='Camera index to use. Default is 0. Assume only 1 camera connected.)')
-    parser.add_argument('--resolution', required=False, default=0,
+    parser.add_argument('--resolution', required=False, default=2,
         help='Camera resolution to use. Default is 0. Options: 0-QVGA, 1-VGA, 2-HD, 3-FULLHD')
     return parser.parse_args(argv)
 
