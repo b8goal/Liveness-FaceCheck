@@ -4,16 +4,11 @@ import cv2
 from imutils import face_utils
 from sklearn.externals import joblib
 
-
-
-
-
 class FaceLivenessModels(Enum):
 
     EYESBLINK_MOUTHOPEN = 0 # depends on multiple frames
     COLORSPACE_YCRCBLUV = 1 # depends on single frame only
     DEFAULT             = EYESBLINK_MOUTHOPEN
-
 
 class FaceLiveness:
 
@@ -22,7 +17,6 @@ class FaceLiveness:
             self._base = FaceLiveness_EYESBLINK_MOUTHOPEN(path)
         elif model == FaceLivenessModels.COLORSPACE_YCRCBLUV:
             self._base = FaceLiveness_COLORSPACE_YCRCBLUV(path)
-        
 
     def is_fake(self, frame, face, flag=0):
         res = self._base.is_fake(frame, face, flag)
@@ -45,7 +39,6 @@ class FaceLiveness:
 
     def get_mouth_threshold(self):
         return self._base.get_mouth_threshold()
-
 
 class FaceLiveness_EYESBLINK_MOUTHOPEN:
 
@@ -78,7 +71,6 @@ class FaceLiveness_EYESBLINK_MOUTHOPEN:
     def get_eye_threshold(self):
         return self._ear_threshold
 
-
     def is_mouth_open(self, frame, face):
         shape = self.get_shape(frame, face)
         # get the mouth aspect ratio (mar) of inner mouth
@@ -94,19 +86,12 @@ class FaceLiveness_EYESBLINK_MOUTHOPEN:
 
     # private function
     def mouth_aspect_ratio(self, mouth):
-        # (|m1-m7|+|m2-m6|+|m3-m5|) / (2|m0-m4|)
-        # np.linalg.norm is faster than dist.euclidean
         return (np.linalg.norm(mouth[1]-mouth[7]) + np.linalg.norm(mouth[2]-mouth[6]) + np.linalg.norm(mouth[3]-mouth[5])) / (2.0 * np.linalg.norm(mouth[0]-mouth[4]))
-        #return (dist.euclidean(mouth[1],mouth[7]) + dist.euclidean(mouth[2],mouth[6]) + dist.euclidean(mouth[3],mouth[5])) / (2.0 * dist.euclidean(mouth[0],mouth[4]))
-
+        
     # private function
     def eye_aspect_ratio(self, eye):
-        # https://vision.fe.uni-lj.si/cvww2016/proceedings/papers/05.pdf
-        # (|e1-e5|+|e2-e4|) / (2|e0-e3|)
-        # np.linalg.norm is faster than dist.euclidean
         return (np.linalg.norm(eye[1]-eye[5]) + np.linalg.norm(eye[2]-eye[4])) / (2.0 * np.linalg.norm(eye[0]-eye[3]))
-        #return (dist.euclidean(eye[1],eye[5]) + dist.euclidean(eye[2],eye[4])) / (2.0 * dist.euclidean(eye[0],eye[3]))
-
+        
     # private function
     def get_shape(self, frame, face):
         import dlib # lazy loading
@@ -127,9 +112,6 @@ class FaceLiveness_COLORSPACE_YCRCBLUV:
 
     def __init__(self, path):
         from sklearn.externals import joblib
-        # https://github.com/ee09115/spoofing_detection
-        # https://www.idiap.ch/dataset/printattack
-        # https://www.idiap.ch/dataset/replayattack
         try:
             self._clf_print = joblib.load(path + "colorspace_ycrcbluv_print.pkl")
         except Exception as e:
@@ -143,13 +125,11 @@ class FaceLiveness_COLORSPACE_YCRCBLUV:
         feature_vector = self.get_embeddings(frame, face)
         if flag == 0:
             prediction = self._clf_print.predict_proba(feature_vector)
-            #print("print ={:.2f}".format(np.mean(prediction[0][1])))
             if np.mean(prediction[0][1]) >= self._threshold_print:
                 return True
             return False
         else:
             prediction = self._clf_replay.predict_proba(feature_vector)
-            #print("replay={:.2f}".format(np.mean(prediction[0][1])))
             if np.mean(prediction[0][1]) >= self._threshold_replay:
                 return True
             return False
@@ -175,4 +155,5 @@ class FaceLiveness_COLORSPACE_YCRCBLUV:
             histr *= 255.0 / histr.max()
             histogram[j] = histr
         return np.array(histogram)
+
 
